@@ -1,4 +1,3 @@
-// Your web app's Firebase configuration
 const firebaseConfig = {
     apiKey: "AIzaSyAG-N5Vn9nw4MRfGg13gSOlTLAkjmpJU1I",
     authDomain: "randomchat1200.firebaseapp.com",
@@ -9,7 +8,6 @@ const firebaseConfig = {
     measurementId: "G-DB89E19HSE"
 };
 
-// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
@@ -23,8 +21,11 @@ if (!currentUser) {
             currentUser = username;
             localStorage.setItem('username', currentUser);
             document.getElementById('username-modal').style.display = 'none';
+            displayMessages(); // Display messages after username is set
         }
     });
+} else {
+    displayMessages(); // Display messages if username is already set
 }
 
 function displayMessages() {
@@ -56,13 +57,3 @@ function sendMessage() {
 }
 
 document.getElementById('send-btn').addEventListener('click', sendMessage);
-
-// Display initial messages
-displayMessages();
-
-// Update messages when storage changes (new message sent)
-window.addEventListener('storage', (event) => {
-    if (event.key && event.key.startsWith('message_')) {
-        displayMessages();
-    }
-});
