@@ -1,4 +1,3 @@
-// Initialize Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAG-N5Vn9nw4MRfGg13gSOlTLAkjmpJU1I",
   authDomain: "randomchat1200.firebaseapp.com",
@@ -8,6 +7,8 @@ const firebaseConfig = {
   messagingSenderId: "388785710092",
   appId: "1:388785710092:web:037248699fd99f9b2ffa29"
 };
+
+// Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
