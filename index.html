@@ -1,37 +1,36 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chat App</title>
-<link rel="stylesheet" href="styles.css">
+    <title>Chat App</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
 </head>
 <body>
-<h1>Chat App</h1>
-<div id="userInfo"></div>
-<input type="text" id="usernameInput" placeholder="Enter your username">
-<button onclick="setUsername()">Set Username</button>
-<br>
-<button onclick="goToGlobalChat(1)">Global Chat 1</button>
-<button onclick="goToGlobalChat(2)">Global Chat 2</button>
-<br>
-<ul id="privateChatMessages"></ul>
-<input type="text" id="privateChatMessageInput" placeholder="Type a message...">
-<button onclick="sendMessage('privateChat')">Send</button>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-<script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyAG-N5Vn9nw4MRfGg13gSOlTLAkjmpJU1I",
-    authDomain: "randomchat1200.firebaseapp.com",
-    databaseURL: "https://randomchat1200-default-rtdb.firebaseio.com",
-    projectId: "randomchat1200",
-    storageBucket: "randomchat1200.appspot.com",
-    messagingSenderId: "388785710092",
-    appId: "1:388785710092:web:037248699fd99f9b2ffa29"
-  };
-  firebase.initializeApp(firebaseConfig);
-</script>
-<script src="script.js"></script>
+    <div class="header">
+        <div class="username">You are logged in as: <span id="username"></span></div>
+        <button id="sign-out">Sign Out</button>
+    </div>
+    <div class="sidebar" id="sidebar"></div>
+    <div class="main-content" id="main-content"></div>
+
+    <textarea id="message-input" rows="3"></textarea>
+    <button id="send-message">Send</button>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.9/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.9/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.9/firebase-firestore.js"></script>
+    <script>
+        // Initialize Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAG-N5Vn9nw4MRfGg13gSOlTLAkjmpJU1I",
+            authDomain: "randomchat1200.firebaseapp.com",
+            databaseURL: "https://randomchat1200-default-rtdb.firebaseio.com",
+            projectId: "randomchat1200",
+            storageBucket: "randomchat1200.appspot.com",
+            messagingSenderId: "388785710092",
+            appId: "1:388785710092:web:037248699fd99f9b2ffa29"
+        };
+        firebase.initializeApp(firebaseConfig);
+    </script>
+    <script src="app.js"></script>
 </body>
 </html>
