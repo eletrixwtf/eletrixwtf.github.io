@@ -1,36 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat App</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Uni+Sans:wght@400;700&display=swap">
-  <link rel="stylesheet" href="styles.css">
-  <meta http-equiv="Permissions-Policy" content="interest-cohort=()"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat App</title>
+<link href="https://fonts.googleapis.com/css2?family=Uni+Sans:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div id="app">
-    <!-- Sidebar with buttons for global chats -->
-    <div class="sidebar">
-      <button onclick="goToGlobalChat('globalChat1')">Global Chat 1</button>
-      <button onclick="goToGlobalChat('globalChat2')">Global Chat 2</button>
-    </div>
+<div id="userInfo"></div>
+<input type="text" id="usernameInput" placeholder="Enter username">
+<button onclick="setUsername()">Set Username</button>
+<button onclick="goToGlobalChat(1)">Global Chat 1</button>
+<button onclick="goToGlobalChat(2)">Global Chat 2</button>
+<ul id="globalChat1Messages"></ul>
+<ul id="globalChat2Messages"></ul>
+<ul id="privateChatMessages"></ul>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+<script>
+  // Your Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyAG-N5Vn9nw4MRfGg13gSOlTLAkjmpJU1I",
+    authDomain: "randomchat1200.firebaseapp.com",
+    databaseURL: "https://randomchat1200-default-rtdb.firebaseio.com",
+    projectId: "randomchat1200",
+    storageBucket: "randomchat1200.appspot.com",
+    messagingSenderId: "388785710092",
+    appId: "1:388785710092:web:037248699fd99f9b2ffa29"
+  };
 
-    <!-- Main content area -->
-    <div class="content">
-      <h1>Welcome to the Chat App</h1>
-      <div id="userInfo"></div>
-      <input type="text" id="usernameInput" placeholder="Enter your username">
-      <button onclick="setUsername()">Set Username</button>
-      <div id="chatContainer">
-        <!-- Chat content will go here -->
-      </div>
-    </div>
-  </div>
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
 
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-  <script src="script.js"></script>
+  // Your existing functions here
+</script>
+<script src="script.js"></script>
 </body>
 </html>
