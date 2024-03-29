@@ -1,4 +1,4 @@
-// script.js
+// Initialize Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyAG-N5Vn9nw4MRfGg13gSOlTLAkjmpJU1I",
   authDomain: "randomchat1200.firebaseapp.com",
@@ -40,16 +40,20 @@ function goToGlobalChat(chatId) {
 
 function displayMessage(chatId, message) {
   const chatMessages = document.getElementById(`${chatId}Messages`);
-  const messageElement = document.createElement('li');
-  messageElement.textContent = `${message.username}: ${message.message}`;
-  chatMessages.appendChild(messageElement);
+  if (chatMessages) {
+    const messageElement = document.createElement('li');
+    messageElement.textContent = `${message.username}: ${message.message}`;
+    chatMessages.appendChild(messageElement);
+  }
 }
 
 function displayPrivateMessage(message) {
   const privateChatMessages = document.getElementById('privateChatMessages');
-  const messageElement = document.createElement('li');
-  messageElement.textContent = `${message.sender} (to ${message.recipient}): ${message.message}`;
-  privateChatMessages.appendChild(messageElement);
+  if (privateChatMessages) {
+    const messageElement = document.createElement('li');
+    messageElement.textContent = `${message.sender} (to ${message.recipient}): ${message.message}`;
+    privateChatMessages.appendChild(messageElement);
+  }
 }
 
 function setupChatListener(chatId) {
