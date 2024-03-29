@@ -17,6 +17,7 @@ let username = null;
 function setUsername() {
   const usernameInput = document.getElementById('usernameInput');
   username = usernameInput.value;
+  document.getElementById('userInfo').textContent = `You are logged in as: ${username}`;
   document.title = `Chat App - ${username}`;
 }
 
@@ -76,10 +77,15 @@ function setupPrivateChatListener() {
   const privateChatRef = database.ref('chats/private');
   privateChatRef.on('child_added', (snapshot) => {
     const message = snapshot.val();
-    if (message.recipient === username || message.sender === username) {
+    if ((message.recipient === username && message.sender === recipientUsername) || 
+        (message.sender === username && message.recipient === recipientUsername)) {
       displayPrivateMessage(message);
     }
   });
+}
+
+function goToGlobalChat(chatId) {
+  window.location.href = `globalChat_${chatId}.html`;
 }
 
 setupChatListener('globalChat1');
