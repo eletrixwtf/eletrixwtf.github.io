@@ -12,41 +12,58 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 
-// Function to set the username
+const db = firebase.database();
+
 function setUsername() {
-  const username = document.getElementById("usernameInput").value;
-  if (username.trim() === "") {
-    alert("Please enter a valid username");
+  const username = prompt("Enter your username:");
+  if (!username) return;
+  document.title = `Chat - ${username}`;
+  localStorage.setItem("username", username);
+}
+
+function getUsername() {
+  return localStorage.getItem("username");
+}
+
+function displayMessage(username, message, timestamp) {
+  const messageContainer = document.getElementById("messageContainer");
+  const messageElement = document.createElement("div");
+  messageElement.classList.add("message");
+  const usernameElement = document.createElement("span");
+  usernameElement.classList.add("username");
+  usernameElement.textContent = username;
+  const messageContentElement = document.createElement("span");
+  messageContentElement.classList.add("message-content");
+  messageContentElement.textContent = message;
+  const timestampElement = document.createElement("span");
+  timestampElement.classList.add("timestamp");
+  timestampElement.textContent = new Date(timestamp).toLocaleString();
+  messageElement.appendChild(usernameElement);
+  messageElement.appendChild(messageContentElement);
+  messageElement.appendChild(timestampElement);
+  messageContainer.appendChild(messageElement);
+  messageContainer.scrollTop = messageContainer.scrollHeight;
+}
+
+document.getElementById("messageForm").addEventListener("submit", function(event) {
+  event.preventDefault();
+  const messageInput = document.getElementById("messageInput");
+  const message = messageInput.value;
+  if (message.trim() === "") {
+    alert("Please enter a message");
     return;
   }
-  document.getElementById("userInfo").innerText = `You are logged in as: ${username}`;
-}
-
-// Function to navigate to a global chat
-function goToGlobalChat(chatNumber) {
-  window.location.href = `globalChat${chatNumber}.html`;
-}
-
-// Function to send a message
-function sendMessage(chatType) {
-  const messageInput = document.getElementById("privateChatMessageInput");
-  const message = messageInput.value;
   messageInput.value = "";
-  const messagesRef = firebase.database().ref(chatType + "Messages");
-  messagesRef.push({
-    sender: "user",
-    message: message
-  });
-}
+  const messageData = {
+    username: getUsername(),
+    message: message,
+    timestamp: firebase.database.ServerValue.TIMESTAMP
+  };
+  db.ref('messages').push(messageData);
+});
 
-// Function to display messages
-function displayMessage(messageData) {
-  const { sender, message } = messageData.val();
-  const messagesList = document.getElementById("privateChatMessages");
-  const messageElement = document.createElement("li");
-  messageElement.innerText = `${sender}: ${message}`;
-  messagesList.appendChild(messageElement);
-}
+db.ref('messages').on('child_added', function(snapshot) {
+  const messageData = snapshot.val();
+  displayMessage(messageData.username, messageData.message, messageData.timestamp);
+});
 
-// Set up message listener
-firebase.database().ref("privateChatMessages").on("child_added", displayMessage);
