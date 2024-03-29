@@ -1,4 +1,15 @@
 // Firebase initialization
+const firebaseConfig = {
+    apiKey: "AIzaSyAG-N5Vn9nw4MRfGg13gSOlTLAkjmpJU1I",
+    authDomain: "randomchat1200.firebaseapp.com",
+    databaseURL: "https://randomchat1200-default-rtdb.firebaseio.com",
+    projectId: "randomchat1200",
+    storageBucket: "randomchat1200.appspot.com",
+    messagingSenderId: "388785710092",
+    appId: "1:388785710092:web:037248699fd99f9b2ffa29"
+};
+firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 
@@ -43,18 +54,7 @@ function loadChatInterface(uid, username) {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     });
 
-    document.getElementById('send-message').addEventListener('click', () => {
-        const messageInput = document.getElementById('message-input');
-        const messageText = messageInput.value.trim();
-        if (messageText) {
-            db.collection('messages').add({
-                text: messageText,
-                username,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            messageInput.value = '';
-        }
-    });
+    document.getElementById('send-message').addEventListener('click', sendMessage);
 }
 
 // Function to load the sidebar
@@ -73,7 +73,7 @@ function loadSidebar(uid) {
         snapshot.forEach(doc => {
             const chatData = doc.data();
             globalChatsList.innerHTML += `
-                <li><a href="#${doc.id}">${chatData.name}</a></li>
+                <li><a href="#${doc.id}" onclick="goToGlobalChat('${doc.id}')">${chatData.name}</a></li>
             `;
         });
     });
@@ -85,10 +85,25 @@ function loadSidebar(uid) {
             const messageData = doc.data();
             const otherParticipant = messageData.participants.find(id => id !== uid);
             privateMessagesList.innerHTML += `
-                <li><a href="#${otherParticipant}">Private message with ${messageData.otherUsername}</a></li>
+                <li><a href="#${otherParticipant}" onclick="goToGlobalChat('${otherParticipant}')">Private message with ${messageData.otherUsername}</a></li>
             `;
         });
     });
+}
+
+// Function to send a message
+function sendMessage() {
+    const messageInput = document.getElementById('message-input');
+    const messageText = messageInput.value.trim();
+    if (messageText) {
+        const username = getCookie('username') || 'Anonymous';
+        db.collection('messages').add({
+            text: messageText,
+            username,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        messageInput.value = '';
+    }
 }
 
 // Function to set a cookie
@@ -116,4 +131,9 @@ function getCookie(name) {
         }
     }
     return null;
+}
+
+// Function to navigate to a global chat
+function goToGlobalChat(chatId) {
+    // Code to navigate to the global chat with ID 'chatId'
 }
