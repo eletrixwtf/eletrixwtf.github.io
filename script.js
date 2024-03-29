@@ -34,21 +34,8 @@ function sendMessage(chatId) {
   });
 }
 
-function sendPrivateMessage() {
-  const privateChatUsernameInput = document.getElementById('privateChatUsernameInput');
-  const recipientUsername = privateChatUsernameInput.value;
-  const messageInput = document.getElementById('privateChatMessageInput');
-  const message = messageInput.value;
-  messageInput.value = '';
-
-  const chatId = `${username}-${recipientUsername}`;
-  const chatRef = database.ref(`chats/private/${chatId}`);
-  chatRef.push({
-    sender: username,
-    recipient: recipientUsername,
-    message,
-    timestamp: firebase.database.ServerValue.TIMESTAMP
-  });
+function goToGlobalChat(chatId) {
+  window.location.href = `globalChat_${chatId}.html`;
 }
 
 function displayMessage(chatId, message) {
@@ -82,10 +69,6 @@ function setupPrivateChatListener() {
       displayPrivateMessage(message);
     }
   });
-}
-
-function goToGlobalChat(chatId) {
-  window.location.href = `globalChat_${chatId}.html`;
 }
 
 setupChatListener('globalChat1');
