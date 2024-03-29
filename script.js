@@ -1,4 +1,4 @@
-// Initialize Firebase
+// Firebase configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAG-N5Vn9nw4MRfGg13gSOlTLAkjmpJU1I",
   authDomain: "randomchat1200.firebaseapp.com",
@@ -8,10 +8,9 @@ const firebaseConfig = {
   messagingSenderId: "388785710092",
   appId: "1:388785710092:web:037248699fd99f9b2ffa29"
 };
-firebase.initializeApp(firebaseConfig);
 
-// Set up Firebase database
-const database = firebase.database();
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
 
 // Function to set the username
 function setUsername() {
@@ -33,7 +32,7 @@ function sendMessage(chatType) {
   const messageInput = document.getElementById("privateChatMessageInput");
   const message = messageInput.value;
   messageInput.value = "";
-  const messagesRef = database.ref(chatType + "Messages");
+  const messagesRef = firebase.database().ref(chatType + "Messages");
   messagesRef.push({
     sender: "user",
     message: message
@@ -50,5 +49,4 @@ function displayMessage(messageData) {
 }
 
 // Set up message listener
-const privateChatMessagesRef = database.ref("privateChatMessages");
-privateChatMessagesRef.on("child_added", displayMessage);
+firebase.database().ref("privateChatMessages").on("child_added", displayMessage);
