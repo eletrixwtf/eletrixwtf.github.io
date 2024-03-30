@@ -1,23 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Chat App</title>
-    <link rel="stylesheet" type="text/css" href="styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Chat</title>
+<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="header">
-        <div class="username">You are logged in as: <span id="username"></span></div>
-        <button id="sign-out">Sign Out</button>
+<div class="chat-container">
+    <header class="chat-header">
+        <h1><i class="fas fa-comments"></i> ChatCord</h1>
+        <a href="javascript:void(0)" id="username-link" class="btn">Change Username</a>
+    </header>
+    <main class="chat-main" id="chat-main">
+        <div class="chat-messages" id="chat-messages"></div>
+    </main>
+    <div class="chat-form-container">
+        <form id="chat-form">
+            <input
+                type="text"
+                id="msg"
+                placeholder="Enter Message"
+                required
+                autocomplete="off"
+            />
+            <button class="btn"><i class="fas fa-paper-plane"></i> Send</button>
+        </form>
     </div>
-    <div class="sidebar" id="sidebar"></div>
-    <div class="main-content" id="main-content"></div>
-
-    <textarea id="message-input" rows="3"></textarea>
-    <button id="send-message">Send</button>
-
-    <script src="https://www.gstatic.com/firebasejs/9.6.9/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.9/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.9/firebase-firestore.js"></script>
-    <script src="app.js"></script>
+</div>
+<div class="modal-container" id="modal-container">
+    <div class="modal">
+        <h2>Enter Your Username</h2>
+        <input
+            type="text"
+            id="username-input"
+            placeholder="Username"
+            required
+            autocomplete="off"
+        />
+        <button class="btn" id="username-submit">Submit</button>
+    </div>
+</div>
+<script src="https://kit.fontawesome.com/a076d05399.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-analytics.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
