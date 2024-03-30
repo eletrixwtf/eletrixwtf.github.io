@@ -97,6 +97,14 @@
     const chatMessages = document.getElementById('chat-messages');
     const messageInput = document.getElementById('message-input');
 
+    // Prompt for username
+    window.onload = function() {
+        const username = prompt('Enter your username:');
+        if (username.trim() !== '') {
+            localStorage.setItem('username', username);
+        }
+    };
+
     function sendMessage() {
         const message = messageInput.value;
         if (message.trim() !== '') {
@@ -114,9 +122,16 @@
         const messageData = snapshot.val();
         const messageElement = document.createElement('div');
         messageElement.classList.add('message');
-        messageElement.innerHTML = `<span>${snapshot.key}</span> ${messageData.message} <time>${messageData.timestamp}</time>`;
+        const username = localStorage.getItem('username');
+        messageElement.innerHTML = `<span>${username}</span> ${messageData.message} <time>${messageData.timestamp}</time>`;
         chatMessages.appendChild(messageElement);
         chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+
+    // Prevent form submission from reloading the page
+    document.querySelector('form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        sendMessage();
     });
 
     // Debug mode
@@ -164,11 +179,26 @@
         console.log('Debug mode deactivated');
     }
 
-    window.addEventListener('keydown', function(event) {
-        if (event.key === 'F12') {
-            enterDebugMode();
-        }
-    });
+    // Listen for console input
+    function consoleListener() {
+        let command = '';
+        const debugCommand = 'activatedebugmode';
+        const listener = function(e) {
+            if (e.key === 'Enter') {
+                if (command === debugCommand) {
+                    enterDebugMode();
+                }
+                command = '';
+            } else {
+                command += e.key;
+            }
+        };
+        return listener;
+    }
+
+    // Add console event listener
+    const listener = consoleListener();
+    window.addEventListener('keydown', listener);
 </script>
 </body>
 </html>
