@@ -83,7 +83,7 @@ chatForm.addEventListener("submit", (e) => {
             username,
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
         });
-        chatForm.reset();
+        chatForm.msg.value = ""; // Clear the message input field
     }
 });
 
