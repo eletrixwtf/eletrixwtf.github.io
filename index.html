@@ -10,7 +10,9 @@
 <div class="chat-container">
     <header class="chat-header">
         <h1><i class="fas fa-comments"></i> ChatCord</h1>
+        <span id="username-display"></span>
         <a href="javascript:void(0)" id="username-link" class="btn">Change Username</a>
+        <button id="sign-out" class="btn">Sign Out</button>
     </header>
     <main class="chat-main" id="chat-main">
         <div class="chat-messages" id="chat-messages"></div>
@@ -31,14 +33,16 @@
 <div class="modal-container" id="modal-container">
     <div class="modal">
         <h2>Enter Your Username</h2>
-        <input
-            type="text"
-            id="username-input"
-            placeholder="Username"
-            required
-            autocomplete="off"
-        />
-        <button class="btn" id="username-submit">Submit</button>
+        <form id="username-form">
+            <input
+                type="text"
+                id="new-username"
+                placeholder="Username"
+                required
+                autocomplete="off"
+            />
+            <button class="btn" id="username-submit">Submit</button>
+        </form>
     </div>
 </div>
 <script src="https://kit.fontawesome.com/a076d05399.js"></script>

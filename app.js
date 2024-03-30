@@ -19,16 +19,25 @@ const chatMessages = document.querySelector(".chat-messages");
 const modalContainer = document.getElementById("modal-container");
 const modal = document.querySelector(".modal");
 const usernameLink = document.getElementById("username-link");
-const usernameInput = document.getElementById("username-input");
-const usernameSubmit = document.getElementById("username-submit");
+const usernameDisplay = document.getElementById("username-display");
+const signOutButton = document.getElementById("sign-out");
 
 let username = localStorage.getItem("username");
 
-if (!username) {
-    showModal();
-} else {
-    setupChat();
-}
+firebase.auth().onAuthStateChanged(function(user) {
+    if (user) {
+        username = user.displayName;
+        setupChat();
+        usernameDisplay.innerText = `Signed in as: ${username}`;
+        usernameLink.style.display = "none";
+        signOutButton.style.display = "inline-block";
+    } else {
+        showModal();
+        usernameDisplay.innerText = "Not signed in";
+        usernameLink.style.display = "inline-block";
+        signOutButton.style.display = "none";
+    }
+});
 
 function showModal() {
     modalContainer.style.display = "flex";
@@ -82,12 +91,24 @@ usernameLink.addEventListener("click", () => {
     showModal();
 });
 
-usernameSubmit.addEventListener("click", () => {
-    const newUsername = usernameInput.value.trim();
+document.getElementById("username-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const newUsername = document.getElementById("new-username").value.trim();
     if (newUsername) {
-        username = newUsername;
-        localStorage.setItem("username", username);
-        hideModal();
-        setupChat();
+        firebase.auth().signInAnonymously().then(() => {
+            const user = firebase.auth().currentUser;
+            user.updateProfile({
+                displayName: newUsername
+            }).then(() => {
+                localStorage.setItem("username", newUsername);
+                hideModal();
+            });
+        });
     }
+});
+
+signOutButton.addEventListener("click", () => {
+    firebase.auth().signOut();
+    localStorage.removeItem("username");
+    location.reload();
 });
