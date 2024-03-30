@@ -82,6 +82,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.0.1/firebase-database.js"></script>
 <script>
     let messageInput;
+    let database;
 
     window.onload = function() {
         const username = prompt('Enter your username:');
@@ -102,23 +103,23 @@
         };
         firebase.initializeApp(firebaseConfig);
 
-        const database = firebase.database();
-
-        function sendMessage() {
-            const message = messageInput.value;
-            if (message.trim() !== '') {
-                const timestamp = new Date().toISOString();
-                const username = localStorage.getItem('username');
-                const newMessageRef = database.ref('messages').push();
-                newMessageRef.set({
-                    message: message,
-                    timestamp: timestamp,
-                    username: username
-                });
-                messageInput.value = '';
-            }
-        }
+        database = firebase.database();
     };
+
+    function sendMessage() {
+        const message = messageInput.value;
+        if (message.trim() !== '') {
+            const timestamp = new Date().toISOString();
+            const username = localStorage.getItem('username');
+            const newMessageRef = database.ref('messages').push();
+            newMessageRef.set({
+                message: message,
+                timestamp: timestamp,
+                username: username
+            });
+            messageInput.value = '';
+        }
+    }
 </script>
 </body>
 </html>
