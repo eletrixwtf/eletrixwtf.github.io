@@ -89,36 +89,36 @@
             localStorage.setItem('username', username);
         }
         messageInput = document.getElementById('message-input');
-    };
 
-    // Firebase configuration
-    const firebaseConfig = {
-        apiKey: "AIzaSyAG-N5Vn9nw4MRfGg13gSOlTLAkjmpJU1I",
-        authDomain: "randomchat1200.firebaseapp.com",
-        databaseURL: "https://randomchat1200-default-rtdb.firebaseio.com",
-        projectId: "randomchat1200",
-        storageBucket: "randomchat1200.appspot.com",
-        messagingSenderId: "388785710092",
-        appId: "1:388785710092:web:037248699fd99f9b2ffa29"
-    };
-    firebase.initializeApp(firebaseConfig);
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAG-N5Vn9nw4MRfGg13gSOlTLAkjmpJU1I",
+            authDomain: "randomchat1200.firebaseapp.com",
+            databaseURL: "https://randomchat1200-default-rtdb.firebaseio.com",
+            projectId: "randomchat1200",
+            storageBucket: "randomchat1200.appspot.com",
+            messagingSenderId: "388785710092",
+            appId: "1:388785710092:web:037248699fd99f9b2ffa29"
+        };
+        firebase.initializeApp(firebaseConfig);
 
-    const database = firebase.database();
+        const database = firebase.database();
 
-    function sendMessage() {
-        const message = messageInput.value;
-        if (message.trim() !== '') {
-            const timestamp = new Date().toISOString();
-            const username = localStorage.getItem('username');
-            const newMessageRef = database.ref('messages').push();
-            newMessageRef.set({
-                message: message,
-                timestamp: timestamp,
-                username: username
-            });
-            messageInput.value = '';
+        function sendMessage() {
+            const message = messageInput.value;
+            if (message.trim() !== '') {
+                const timestamp = new Date().toISOString();
+                const username = localStorage.getItem('username');
+                const newMessageRef = database.ref('messages').push();
+                newMessageRef.set({
+                    message: message,
+                    timestamp: timestamp,
+                    username: username
+                });
+                messageInput.value = '';
+            }
         }
-    }
+    };
 </script>
 </body>
 </html>
