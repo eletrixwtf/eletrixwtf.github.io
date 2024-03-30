@@ -3,53 +3,172 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live Chat</title>
-<link rel="stylesheet" href="styles.css">
+<title>Chat App</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #1f1f1f;
+        color: #ffffff;
+        margin: 0;
+        padding: 0;
+    }
+
+    .dark-theme {
+        background-color: #333333;
+    }
+
+    .chat-container {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: scroll;
+        padding: 20px;
+    }
+
+    .message {
+        margin-bottom: 10px;
+    }
+
+    .message span {
+        font-weight: bold;
+        margin-right: 10px;
+    }
+
+    .message time {
+        font-size: 12px;
+        color: #888888;
+    }
+
+    .input-container {
+        display: flex;
+        padding: 10px;
+        background-color: #333333;
+    }
+
+    .input-container input {
+        flex: 1;
+        padding: 10px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+    }
+
+    .input-container button {
+        padding: 10px 20px;
+        margin-left: 10px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        background-color: #007bff;
+        color: #ffffff;
+        cursor: pointer;
+    }
+</style>
 </head>
 <body>
 <div class="chat-container">
-    <header class="chat-header">
-        <h1><i class="fas fa-comments"></i> ChatCord</h1>
-        <span id="username-display"></span>
-        <a href="javascript:void(0)" id="username-link" class="btn">Change Username</a>
-        <button id="sign-out" class="btn">Sign Out</button>
-    </header>
-    <main class="chat-main" id="chat-main">
-        <div class="chat-messages" id="chat-messages"></div>
-    </main>
-    <div class="chat-form-container">
-        <form id="chat-form">
-            <input
-                type="text"
-                id="msg"
-                placeholder="Enter Message"
-                required
-                autocomplete="off"
-            />
-            <button class="btn"><i class="fas fa-paper-plane"></i> Send</button>
-        </form>
+    <div class="chat-messages" id="chat-messages"></div>
+    <div class="input-container">
+        <input type="text" id="message-input" placeholder="Type your message...">
+        <button onclick="sendMessage()">Send</button>
     </div>
 </div>
-<div class="modal-container" id="modal-container">
-    <div class="modal">
-        <h2>Enter Your Username</h2>
-        <form id="username-form">
-            <input
-                type="text"
-                id="new-username"
-                placeholder="Username"
-                required
-                autocomplete="off"
-            />
-            <button class="btn" id="username-submit">Submit</button>
-        </form>
-    </div>
-</div>
-<script src="https://kit.fontawesome.com/a076d05399.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.2/firebase-analytics.js"></script>
-<script src="app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.0.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.0.1/firebase-database.js"></script>
+<script>
+    // Initialize Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyAG-N5Vn9nw4MRfGg13gSOlTLAkjmpJU1I",
+        authDomain: "randomchat1200.firebaseapp.com",
+        databaseURL: "https://randomchat1200-default-rtdb.firebaseio.com",
+        projectId: "randomchat1200",
+        storageBucket: "randomchat1200.appspot.com",
+        messagingSenderId: "388785710092",
+        appId: "1:388785710092:web:037248699fd99f9b2ffa29"
+    };
+    firebase.initializeApp(firebaseConfig);
+
+    const database = firebase.database();
+    const chatMessages = document.getElementById('chat-messages');
+    const messageInput = document.getElementById('message-input');
+
+    function sendMessage() {
+        const message = messageInput.value;
+        if (message.trim() !== '') {
+            const timestamp = new Date().toISOString();
+            const newMessageRef = database.ref('messages').push();
+            newMessageRef.set({
+                message: message,
+                timestamp: timestamp
+            });
+            messageInput.value = '';
+        }
+    }
+
+    database.ref('messages').on('child_added', function(snapshot) {
+        const messageData = snapshot.val();
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('message');
+        messageElement.innerHTML = `<span>${snapshot.key}</span> ${messageData.message} <time>${messageData.timestamp}</time>`;
+        chatMessages.appendChild(messageElement);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+
+    // Debug mode
+    let debugMode = false;
+
+    function enterDebugMode() {
+        debugMode = true;
+        console.log('Debug mode activated');
+        showDebugMenu();
+    }
+
+    function showDebugMenu() {
+        const debugMenu = document.createElement('div');
+        debugMenu.innerHTML = `
+            <div id="debug-menu" style="position: fixed; top: 10px; right: 10px; background-color: rgba(0, 0, 0, 0.8); color: #ffffff; padding: 10px; border-radius: 5px;">
+                <h3>Debug Menu</h3>
+                <button onclick="clearMessages()">Clear Messages</button>
+                <button onclick="toggleDarkMode()">Toggle Dark Mode</button>
+                <button onclick="exitDebugMode()">Exit Debug Mode</button>
+            </div>
+        `;
+        document.body.appendChild(debugMenu);
+    }
+
+    function clearMessages() {
+        if (debugMode) {
+            database.ref('messages').remove();
+            console.log('Messages cleared');
+        }
+    }
+
+    function toggleDarkMode() {
+        if (debugMode) {
+            document.body.classList.toggle('dark-theme');
+            console.log('Dark mode toggled');
+        }
+    }
+
+    function exitDebugMode() {
+        debugMode = false;
+        const debugMenu = document.getElementById('debug-menu');
+        if (debugMenu) {
+            debugMenu.remove();
+        }
+        console.log('Debug mode deactivated');
+    }
+
+    window.addEventListener('keydown', function(event) {
+        if (event.key === 'F12') {
+            enterDebugMode();
+        }
+    });
+</script>
 </body>
 </html>
