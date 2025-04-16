@@ -76,14 +76,28 @@
   <script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@4.0.3/dist/obs-websocket.js"></script>
   <script>
     const obs = new OBSWebSocket();
-    const apiKey = '25a14347a5cfc317c6c2f4889a0019a9'; // Replace with your AviationStack API key
-    const obsPassword = 'psaupsswebserver123@@'; // Replace with your OBS WebSocket password
-    const baseUrl = 'https://eletrixwtf.github.io'; // Replace with your GitHub Pages URL, e.g., https://yourusername.github.io/flight-tracker/
+    const apiKey = 'ce42ef7b2202bff41d26d7148d9a244e';
+    const obsPassword = 'psaupsswebserver123@@';
+    const baseUrl = 'https://eletrixwtf.github.io/flight-tracker/';
 
-    // Connect to OBS WebSocket
-    obs.connect('ws://localhost:4444', obsPassword)
-      .then(() => console.log('Connected to OBS'))
-      .catch(err => console.error('OBS connection failed:', err));
+    // Function to connect to OBS WebSocket with automatic reconnect
+    function connectToOBS() {
+      obs.connect('ws://localhost:4444', obsPassword)
+        .then(() => {
+          console.log('Connected to OBS');
+        })
+        .catch(err => {
+          console.error('OBS connection failed:', err);
+          setTimeout(connectToOBS, 5000); // Try again in 5 seconds
+        });
+    }
+    connectToOBS();
+
+    // Reconnect if the connection is closed
+    obs.on('ConnectionClosed', () => {
+      console.log('WebSocket client disconnected');
+      setTimeout(connectToOBS, 5000); // Reconnect after 5 seconds
+    });
 
     // Get URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -121,15 +135,18 @@
           return;
         }
 
-        // Fetch flight data
+        // Fetch flight data with detailed error handling
         fetch(`http://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}&flight_status=active`)
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}, Message: ${response.statusText}`);
+            }
+            return response.json();
+          })
           .then(data => {
             if (data.data && data.data.length > 0) {
               const flight = data.data[0];
-              // Check if flight is related to Melbourne Airport
               if (flight.departure.iata === 'MEL' || flight.arrival.iata === 'MEL') {
-                // Update browser source URLs
                 const sources = [
                   { name: 'Destination Browser', url: `${baseUrl}?callsign=${callsign}` },
                   { name: 'Airline Browser', url: `${baseUrl}?callsign=${callsign}` },
@@ -141,15 +158,13 @@
                     url: source.url
                   }).catch(err => console.error(`Failed to update ${source.name}:`, err));
                 });
-                // Show image and browser sources
                 ['Image Source', 'Destination Browser', 'Airline Browser', 'Registration Browser'].forEach(source => {
                   obs.send('SetSourceVisibility', {
                     sourceName: source,
                     visible: true,
-                    sceneName: 'Flight Scene' // Replace with your scene name if different
+                    sceneName: 'Flight Scene'
                   }).catch(err => console.error(`Failed to show ${source}:`, err));
                 });
-                // Show flight info in controller
                 inputSection.style.display = 'none';
                 flightInfo.style.display = 'block';
                 currentCallsign.textContent = callsign;
@@ -157,21 +172,20 @@
                 document.getElementById('airline').textContent = `Airline: ${flight.airline.name || 'Unknown'}`;
                 document.getElementById('registration').textContent = `Registration: ${flight.aircraft?.registration || 'Unknown'}`;
               } else {
-                showError('Flight not found at Melbourne Airport');
+                showError('Flight not found at Melbourne Airport (MEL)');
               }
             } else {
-              showError('Flight not found');
+              showError('Flight not found or not active');
             }
           })
           .catch(error => {
             console.error('Error fetching flight data:', error);
-            showError('Error fetching flight data');
+            showError(`Error fetching flight data: ${error.message}`);
           });
       }
 
       // Handle reset button
       resetBtn.addEventListener('click', () => {
-        // Reset browser source URLs
         const sources = [
           { name: 'Destination Browser', url: baseUrl },
           { name: 'Airline Browser', url: baseUrl },
@@ -183,15 +197,13 @@
             url: source.url
           }).catch(err => console.error(`Failed to reset ${source.name}:`, err));
         });
-        // Hide image and browser sources
         ['Image Source', 'Destination Browser', 'Airline Browser', 'Registration Browser'].forEach(source => {
           obs.send('SetSourceVisibility', {
             sourceName: source,
             visible: false,
-            sceneName: 'Flight Scene' // Replace with your scene name if different
+            sceneName: 'Flight Scene'
           }).catch(err => console.error(`Failed to hide ${source}:`, err));
         });
-        // Clear input and show input section
         callsignInput.value = '';
         showError('');
         inputSection.style.display = 'block';
@@ -203,7 +215,12 @@
         inputSection.style.display = 'none';
         flightInfo.style.display = 'block';
         fetch(`http://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}&flight_status=active`)
-          .then(response => response.json())
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}, Message: ${response.statusText}`);
+            }
+            return response.json();
+          })
           .then(data => {
             if (data.data && data.data.length > 0) {
               const flight = data.data[0];
@@ -218,9 +235,9 @@
           })
           .catch(error => {
             console.error('Error fetching flight data:', error);
-            document.getElementById('destination').textContent = 'Destination: Error';
-            document.getElementById('airline').textContent = 'Airline: Error';
-            document.getElementById('registration').textContent = 'Registration: Error';
+            document.getElementById('destination').textContent = `Destination: Error - ${error.message}`;
+            document.getElementById('airline').textContent = `Airline: Error - ${error.message}`;
+            document.getElementById('registration').textContent = `Registration: Error - ${error.message}`;
           });
       } else {
         inputSection.style.display = 'none';
