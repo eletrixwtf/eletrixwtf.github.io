@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flight Tracker for OBS</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    #input-section {
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      width: 300px;
+    }
+    #callsign-input {
+      padding: 10px;
+      width: 100%;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #submit-btn, #reset-btn {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #submit-btn:hover, #reset-btn:hover {
+      background-color: #0056b3;
+    }
+    #flight-info {
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      width: 300px;
+      margin-top: 20px;
+    }
+    #destination, #airline, #registration {
+      margin: 10px 0;
+      font-size: 18px;
+      color: #ff0; /* Yellow text for browser sources */
+    }
+    #error-message {
+      color: red;
+      margin-top: 10px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="input-section">
+    <h2>Enter Flight Call Sign</h2>
+    <input type="text" id="callsign-input" placeholder="e.g., QF123">
+    <button id="submit-btn">Submit</button>
+    <div id="error-message"></div>
+  </div>
+  <div id="flight-info" style="display: none;">
+    <h2>Flight Information</h2>
+    <div>Call Sign: <span id="current-callsign"></span></div>
+    <div id="destination"></div>
+    <div id="airline"></div>
+    <div id="registration"></div>
+    <button id="reset-btn">Reset</button>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@4.0.3/dist/obs-websocket.js"></script>
+  <script>
+    const obs = new OBSWebSocket();
+    const apiKey = 'YOUR_API_KEY'; // Replace with your AviationStack API key
+    const obsPassword = 'YOUR_OBS_WEBSOCKET_PASSWORD'; // Replace with your OBS WebSocket password
+    const baseUrl = 'YOUR_GITHUB_PAGES_URL'; // Replace with your GitHub Pages URL, e.g., https://yourusername.github.io/flight-tracker/
+
+    // Connect to OBS WebSocket
+    obs.connect('ws://localhost:4444', obsPassword)
+      .then(() => console.log('Connected to OBS'))
+      .catch(err => console.error('OBS connection failed:', err));
+
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const mode = urlParams.get('mode');
+    const callsign = urlParams.get('callsign');
+
+    // Elements
+    const inputSection = document.getElementById('input-section');
+    const flightInfo = document.getElementById('flight-info');
+    const callsignInput = document.getElementById('callsign-input');
+    const submitBtn = document.getElementById('submit-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const errorMessage = document.getElementById('error-message');
+    const currentCallsign = document.getElementById('current-callsign');
+
+    // Handle controller mode (dock)
+    if (mode === 'controller') {
+      inputSection.style.display = 'block';
+      flightInfo.style.display = 'none';
+
+      // Handle Enter key
+      callsignInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          submitCallsign();
+        }
+      });
+
+      // Handle submit button
+      submitBtn.addEventListener('click', submitCallsign);
+
+      function submitCallsign() {
+        const callsign = callsignInput.value.trim().toUpperCase();
+        if (!callsign) {
+          showError('Please enter a call sign');
+          return;
+        }
+
+        // Fetch flight data
+        fetch(`http://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}&flight_status=active`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.data && data.data.length > 0) {
+              const flight = data.data[0];
+              // Check if flight is related to Melbourne Airport
+              if (flight.departure.iata === 'MEL' || flight.arrival.iata === 'MEL') {
+                // Update browser source URLs
+                const sources = [
+                  { name: 'Destination Browser', url: `${baseUrl}?callsign=${callsign}` },
+                  { name: 'Airline Browser', url: `${baseUrl}?callsign=${callsign}` },
+                  { name: 'Registration Browser', url: `${baseUrl}?callsign=${callsign}` }
+                ];
+                sources.forEach(source => {
+                  obs.send('SetBrowserSourceProperties', {
+                    sourceName: source.name,
+                    url: source.url
+                  }).catch(err => console.error(`Failed to update ${source.name}:`, err));
+                });
+                // Show image and browser sources
+                ['Image Source', 'Destination Browser', 'Airline Browser', 'Registration Browser'].forEach(source => {
+                  obs.send('SetSourceVisibility', {
+                    sourceName: source,
+                    visible: true,
+                    sceneName: 'Flight Scene' // Replace with your scene name if different
+                  }).catch(err => console.error(`Failed to show ${source}:`, err));
+                });
+                // Show flight info in controller
+                inputSection.style.display = 'none';
+                flightInfo.style.display = 'block';
+                currentCallsign.textContent = callsign;
+                document.getElementById('destination').textContent = `Destination: ${flight.arrival.airport || 'Unknown'}`;
+                document.getElementById('airline').textContent = `Airline: ${flight.airline.name || 'Unknown'}`;
+                document.getElementById('registration').textContent = `Registration: ${flight.aircraft?.registration || 'Unknown'}`;
+              } else {
+                showError('Flight not found at Melbourne Airport');
+              }
+            } else {
+              showError('Flight not found');
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching flight data:', error);
+            showError('Error fetching flight data');
+          });
+      }
+
+      // Handle reset button
+      resetBtn.addEventListener('click', () => {
+        // Reset browser source URLs
+        const sources = [
+          { name: 'Destination Browser', url: baseUrl },
+          { name: 'Airline Browser', url: baseUrl },
+          { name: 'Registration Browser', url: baseUrl }
+        ];
+        sources.forEach(source => {
+          obs.send('SetBrowserSourceProperties', {
+            sourceName: source.name,
+            url: source.url
+          }).catch(err => console.error(`Failed to reset ${source.name}:`, err));
+        });
+        // Hide image and browser sources
+        ['Image Source', 'Destination Browser', 'Airline Browser', 'Registration Browser'].forEach(source => {
+          obs.send('SetSourceVisibility', {
+            sourceName: source,
+            visible: false,
+            sceneName: 'Flight Scene' // Replace with your scene name if different
+          }).catch(err => console.error(`Failed to hide ${source}:`, err));
+        });
+        // Clear input and show input section
+        callsignInput.value = '';
+        showError('');
+        inputSection.style.display = 'block';
+        flightInfo.style.display = 'none';
+      });
+    } else {
+      // Display mode (browser sources)
+      if (callsign) {
+        inputSection.style.display = 'none';
+        flightInfo.style.display = 'block';
+        fetch(`http://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}&flight_status=active`)
+          .then(response => response.json())
+          .then(data => {
+            if (data.data && data.data.length > 0) {
+              const flight = data.data[0];
+              document.getElementById('destination').textContent = `Destination: ${flight.arrival.airport || 'Unknown'}`;
+              document.getElementById('airline').textContent = `Airline: ${flight.airline.name || 'Unknown'}`;
+              document.getElementById('registration').textContent = `Registration: ${flight.aircraft?.registration || 'Unknown'}`;
+            } else {
+              document.getElementById('destination').textContent = 'Destination: Not found';
+              document.getElementById('airline').textContent = 'Airline: Not found';
+              document.getElementById('registration').textContent = 'Registration: Not found';
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching flight data:', error);
+            document.getElementById('destination').textContent = 'Destination: Error';
+            document.getElementById('airline').textContent = 'Airline: Error';
+            document.getElementById('registration').textContent = 'Registration: Error';
+          });
+      } else {
+        inputSection.style.display = 'none';
+        flightInfo.style.display = 'none';
+        document.getElementById('destination').textContent = '';
+        document.getElementById('airline').textContent = '';
+        document.getElementById('registration').textContent = '';
+      }
+    }
+
+    // Show error or confirmation message
+    function showError(message, isError = true) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = message ? 'block' : 'none';
+      errorMessage.style.color = isError ? 'red' : 'green';
+    }
+  </script>
+</body>
+</html>
