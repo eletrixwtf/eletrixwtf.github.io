@@ -136,7 +136,7 @@
         }
 
         // Fetch flight data with detailed error handling
-        fetch(`http://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}`)
+        fetch(`https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}`)
           .then(response => {
             if (!response.ok) {
               throw new Error(`HTTP error! Status: ${response.status}, Message: ${response.statusText}`);
@@ -214,7 +214,7 @@
       if (callsign) {
         inputSection.style.display = 'none';
         flightInfo.style.display = 'block';
-        fetch(`http://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}`)
+        fetch(`https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}`)
           .then(response => {
             if (!response.ok) {
               throw new Error(`HTTP error! Status: ${response.status}, Message: ${response.statusText}`);
