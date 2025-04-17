@@ -122,6 +122,8 @@
   <footer>© 2025 PLANE SPOTTING AUSTRALIA. FLIGHT CARD SYSTEM DEVELOPED BY XYLORRL.</footer>
 
   <script>
+    const apiKey = '0832a565f4304b429fe389511b55037a';
+
     // Elements
     const inputSection = document.getElementById('input-section');
     const flightInfo = document.getElementById('flight-info');
@@ -170,10 +172,9 @@
       }
     });
 
-    // Function to fetch and display flight data using OpenSky Network API
+    // Function to fetch and display flight data
     function fetchFlightData(callsign) {
-      // Fetch all flights and filter for the callsign
-      fetch('https://opensky-network.org/api/states/all')
+      fetch(`https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}`)
         .then(response => {
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}, Message: ${response.statusText}`);
@@ -181,20 +182,15 @@
           return response.json();
         })
         .then(data => {
-          const flight = data.states.find(state => state[1]?.trim().toUpperCase() === callsign);
-          if (flight) {
-            const originCountry = flight[2] || 'Unknown';
-            const icao24 = flight[0]; // Aircraft transponder code for registration lookup
-            const melAirports = ['YMML']; // Melbourne Airport ICAO code
-            const isAtMelbourne = melAirports.includes(flight[13]) || melAirports.includes(flight[11]); // Check origin or destination airport
-
-            if (isAtMelbourne) {
+          if (data.data && data.data.length > 0) {
+            const flight = data.data[0];
+            if (flight.departure.iata === 'MEL' || flight.arrival.iata === 'MEL') {
               inputSection.style.display = 'none';
               flightInfo.style.display = 'block';
               currentCallsign.textContent = callsign;
-              document.getElementById('destination').textContent = flight[13] === 'YMML' ? 'Melbourne Airport' : (flight[11] === 'YMML' ? 'Departing Melbourne' : 'Unknown');
-              document.getElementById('airline').textContent = originCountry; // OpenSky doesn't provide airline name directly
-              document.getElementById('registration').textContent = icao24 || 'Unknown'; // Registration approximation
+              document.getElementById('destination').textContent = flight.arrival.airport || 'Unknown';
+              document.getElementById('airline').textContent = flight.airline.name || 'Unknown';
+              document.getElementById('registration').textContent = flight.aircraft?.registration || 'Unknown';
             } else {
               showError('Flight not found at Melbourne Airport (MEL)');
             }
