@@ -81,14 +81,14 @@
     const baseUrl = 'https://eletrixwtf.github.io/';
     let reconnectAttempts = 0;
     const maxReconnectAttempts = 3;
-    const reconnectInterval = 60000; // 60 seconds
+    const reconnectInterval = 120000; // 120 seconds to reduce lag
 
     // Function to connect to OBS WebSocket with limited reconnect attempts
     function connectToOBS() {
       if (reconnectAttempts >= maxReconnectAttempts) {
         return; // Stop trying to reconnect after max attempts
       }
-      obs.connect('ws://localhost:4455', obsPassword)
+      obs.connect('ws://localhost:4444', obsPassword)
         .then(() => {
           reconnectAttempts = 0; // Reset attempts on successful connection
         })
