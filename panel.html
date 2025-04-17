@@ -33,56 +33,113 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Flight Tracker Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Montserrat', sans-serif;
       background-color: black;
-      color: #ff0; /* Yellow text */
       margin: 0;
-      padding: 10px;
-      width: 300px;
+      padding: 0;
+      width: 400px;
       box-sizing: border-box;
+      color: #fff;
     }
-    h2 {
-      font-size: 24px;
-      margin: 0 0 10px 0;
+    #flight-display {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: auto auto auto;
+      gap: 5px;
+    }
+    .header {
+      grid-column: 1 / 3;
+      background-color: black;
+      padding: 10px;
       text-align: center;
-      color: white;
+      font-size: 24px;
+      font-weight: 700;
       text-transform: uppercase;
+      border: 2px solid white;
     }
-    .info-row {
+    .info-box {
+      background-color: black;
+      padding: 10px;
+      text-align: center;
+      border: 2px solid white;
+    }
+    .info-box.route {
+      grid-column: 1 / 3;
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+    }
+    .info-box .value {
+      font-size: 20px;
+      font-weight: 700;
       margin-bottom: 5px;
     }
-    .info-row div {
-      font-size: 18px;
+    .info-box.route .value {
+      color: #ff0; /* Yellow for route */
+      font-size: 24px;
     }
-    .label {
-      color: white;
+    .info-box .label {
+      font-size: 12px;
+      font-weight: 400;
+      color: #fff;
     }
-    .value {
-      color: #ff0; /* Yellow text for values */
+    .location-icon {
+      width: 20px;
+      height: 20px;
+      background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>') no-repeat center;
+      background-size: contain;
     }
   </style>
 </head>
 <body>
-  <h2>FLIGHT INFORMATION</h2>
-  <div class="info-row">
-    <div class="label">Destination:</div>
-    <div class="value" id="display-destination">Unknown</div>
-  </div>
-  <div class="info-row">
-    <div class="label">Callsign:</div>
-    <div class="value" id="display-callsign">Unknown</div>
-  </div>
-  <div class="info-row">
-    <div class="label">Airline:</div>
-    <div class="value" id="display-airline">Unknown</div>
+  <div id="flight-display">
+    <div class="header">FLIGHT INFORMATION</div>
+    <div class="info-box">
+      <div class="value" id="display-airline">Unknown</div>
+      <div class="label">Airline</div>
+    </div>
+    <div class="info-box">
+      <div class="value" id="display-flight-number">Unknown</div>
+      <div class="label">Flight Number</div>
+    </div>
+    <div class="info-box route">
+      <div class="location-icon"></div>
+      <div class="value" id="display-route">Unknown</div>
+      <div class="location-icon"></div>
+      <div class="label" style="position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);">Destination</div>
+    </div>
+    <div class="info-box">
+      <div class="value" id="display-aircraft-type">Unknown</div>
+      <div class="label">Aircraft Type</div>
+    </div>
+    <div class="info-box">
+      <div class="value" id="display-flight-time">Unknown</div>
+      <div class="label">Flight Time</div>
+    </div>
   </div>
 
   <script>
     const apiKey = '0832a565f4304b429fe389511b55037a';
+
+    // Function to calculate flight duration
+    function calculateFlightTime(departureTime, arrivalTime) {
+      try {
+        const dep = new Date(departureTime);
+        const arr = new Date(arrivalTime);
+        const diffMs = arr - dep;
+        const diffMins = Math.floor(diffMs / 1000 / 60);
+        const hours = Math.floor(diffMins / 60);
+        const minutes = diffMins % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      } catch (error) {
+        console.error('Error calculating flight time:', error);
+        return 'Unknown';
+      }
+    }
 
     // Function to fetch and display flight data
     function fetchFlightData(callsign) {
@@ -96,22 +153,28 @@
         .then(data => {
           if (data.data && data.data.length > 0) {
             const flight = data.data[0];
-            document.getElementById('display-destination').textContent = `${flight.arrival.airport || 'Unknown'}`;
-            document.getElementById('display-callsign').textContent = callsign;
             document.getElementById('display-airline').textContent = `${flight.airline.name || 'Unknown'}`;
+            document.getElementById('display-flight-number').textContent = flight.flight.iata || callsign;
+            document.getElementById('display-route').textContent = `${flight.departure.iata || 'Unknown'} - ${flight.arrival.iata || 'Unknown'}`;
+            document.getElementById('display-aircraft-type').textContent = flight.aircraft?.model || 'Unknown';
+            document.getElementById('display-flight-time').textContent = calculateFlightTime(flight.departure.scheduled, flight.arrival.scheduled);
             document.body.style.display = 'block';
           } else {
-            document.getElementById('display-destination').textContent = 'Not found';
-            document.getElementById('display-callsign').textContent = 'Not found';
             document.getElementById('display-airline').textContent = 'Not found';
+            document.getElementById('display-flight-number').textContent = 'Not found';
+            document.getElementById('display-route').textContent = 'Not found';
+            document.getElementById('display-aircraft-type').textContent = 'Not found';
+            document.getElementById('display-flight-time').textContent = 'Not found';
             document.body.style.display = 'block';
           }
         })
         .catch(error => {
           console.error('Error fetching flight data:', error);
-          document.getElementById('display-destination').textContent = `Error - ${error.message}`;
-          document.getElementById('display-callsign').textContent = `Error - ${error.message}`;
           document.getElementById('display-airline').textContent = `Error - ${error.message}`;
+          document.getElementById('display-flight-number').textContent = `Error - ${error.message}`;
+          document.getElementById('display-route').textContent = `Error - ${error.message}`;
+          document.getElementById('display-aircraft-type').textContent = `Error - ${error.message}`;
+          document.getElementById('display-flight-time').textContent = `Error - ${error.message}`;
           document.body.style.display = 'block';
         });
     }

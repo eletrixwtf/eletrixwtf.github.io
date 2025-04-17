@@ -35,7 +35,7 @@
       width: 100%;
       padding: 10px;
       border: none;
-      border-radius: 8px;
+      border-radius: 20px;
       font-family: 'Montserrat', sans-serif;
       font-size: 16px;
       margin-bottom: 20px;
@@ -45,7 +45,7 @@
       background-color: #00cc00;
       color: #fff;
       border: none;
-      border-radius: 9px;
+      border-radius: 20px;
       padding: 10px 20px;
       font-family: 'Montserrat', sans-serif;
       font-size: 16px;
@@ -83,7 +83,7 @@
     footer {
       position: fixed;
       bottom: 10px;
-      font-size: 8px;
+      font-size: 12px;
       color: #fff;
       text-align: center;
       width: 100%;
@@ -94,7 +94,7 @@
   <div id="input-section">
     <h1>FLIGHT CARD</h1>
     <h2>TYPE IN THE CALL SIGN BELOW:</h2>
-    <input type="text" id="callsign-input" placeholder="e.g., VA284">
+    <input type="text" id="callsign-input" placeholder="e.g., QF001">
     <button id="submit-btn">SUBMIT</button>
     <div id="error-message"></div>
   </div>
@@ -102,27 +102,31 @@
     <h1>FLIGHT CARD</h1>
     <h2>CURRENT CALL SIGN</h2>
     <div class="info-row">
-      <span class="label">CALL SIGN:</span>
-      <span class="value" id="current-callsign"></span>
-    </div>
-    <div class="info-row">
-      <span class="label">DESTINATION:</span>
-      <span class="value" id="destination"></span>
-    </div>
-    <div class="info-row">
       <span class="label">AIRLINE:</span>
       <span class="value" id="airline"></span>
     </div>
     <div class="info-row">
-      <span class="label">REGISTRATION:</span>
-      <span class="value" id="registration"></span>
+      <span class="label">FLIGHT NUMBER:</span>
+      <span class="value" id="flight-number"></span>
+    </div>
+    <div class="info-row">
+      <span class="label">ROUTE:</span>
+      <span class="value" id="route"></span>
+    </div>
+    <div class="info-row">
+      <span class="label">AIRCRAFT TYPE:</span>
+      <span class="value" id="aircraft-type"></span>
+    </div>
+    <div class="info-row">
+      <span class="label">FLIGHT TIME:</span>
+      <span class="value" id="flight-time"></span>
     </div>
     <button id="reset-btn">RESET</button>
   </div>
-  <footer>© 2025 PLANESPOTTINGAUSTRALIA. FLIGHT CARD SYSTEM DEVELOPED BY XYLORR1DEV.</footer>
+  <footer>© 2025 PlaneSpottingAustralia. FCS made by xylorr1dev.</footer>
 
   <script>
-    const apiKey = '0832a565f4304b429fe389511b55037a';
+    const apiKey = 'e6411c7528cc23341da3d19803b15d1f';
 
     // Elements
     const inputSection = document.getElementById('input-section');
@@ -131,7 +135,6 @@
     const submitBtn = document.getElementById('submit-btn');
     const resetBtn = document.getElementById('reset-btn');
     const errorMessage = document.getElementById('error-message');
-    const currentCallsign = document.getElementById('current-callsign');
 
     // Check if a callsign is stored in localStorage
     const storedCallsign = localStorage.getItem('callsign');
@@ -172,6 +175,22 @@
       }
     });
 
+    // Function to calculate flight duration
+    function calculateFlightTime(departureTime, arrivalTime) {
+      try {
+        const dep = new Date(departureTime);
+        const arr = new Date(arrivalTime);
+        const diffMs = arr - dep;
+        const diffMins = Math.floor(diffMs / 1000 / 60);
+        const hours = Math.floor(diffMins / 60);
+        const minutes = diffMins % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      } catch (error) {
+        console.error('Error calculating flight time:', error);
+        return 'Unknown';
+      }
+    }
+
     // Function to fetch and display flight data
     function fetchFlightData(callsign) {
       fetch(`https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}`)
@@ -187,10 +206,11 @@
             if (flight.departure.iata === 'MEL' || flight.arrival.iata === 'MEL') {
               inputSection.style.display = 'none';
               flightInfo.style.display = 'block';
-              currentCallsign.textContent = callsign;
-              document.getElementById('destination').textContent = flight.arrival.airport || 'Unknown';
               document.getElementById('airline').textContent = flight.airline.name || 'Unknown';
-              document.getElementById('registration').textContent = flight.aircraft?.registration || 'Unknown';
+              document.getElementById('flight-number').textContent = flight.flight.iata || callsign;
+              document.getElementById('route').textContent = `${flight.departure.iata || 'Unknown'} - ${flight.arrival.iata || 'Unknown'}`;
+              document.getElementById('aircraft-type').textContent = flight.aircraft?.model || 'Unknown';
+              document.getElementById('flight-time').textContent = calculateFlightTime(flight.departure.scheduled, flight.arrival.scheduled);
             } else {
               showError('Flight not found at Melbourne Airport (MEL)');
             }
