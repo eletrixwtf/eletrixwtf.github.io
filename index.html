@@ -45,15 +45,45 @@
       width: 300px;
       margin-top: 20px;
     }
-    #destination, #airline, #registration {
-      margin: 10px 0;
-      font-size: 18px;
-      color: #ff0; /* Yellow text for browser sources */
-    }
     #error-message {
       color: red;
       margin-top: 10px;
       display: none;
+    }
+    /* Browser source styling to match the image */
+    #flight-display {
+      background-color: black;
+      color: #ff0; /* Yellow text */
+      font-family: Arial, sans-serif;
+      padding: 10px;
+      width: 300px;
+      box-sizing: border-box;
+    }
+    #flight-display h2 {
+      font-size: 24px;
+      margin: 0 0 10px 0;
+      text-align: center;
+      color: white;
+      text-transform: uppercase;
+    }
+    #flight-display .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+    #flight-display .info-row div {
+      font-size: 18px;
+    }
+    #flight-display .info-row .label {
+      color: white;
+    }
+    #flight-display .info-row .value {
+      color: #ff0; /* Yellow text for values */
+    }
+    #destination, #current-callsign, #airline, #registration {
+      color: #ff0; /* Yellow text for controller display */
+      font-size: 18px;
+      margin: 10px 0;
     }
   </style>
 </head>
@@ -72,39 +102,25 @@
     <div id="registration"></div>
     <button id="reset-btn">Reset</button>
   </div>
+  <div id="flight-display" style="display: none;">
+    <h2>FLIGHT INFORMATION</h2>
+    <div class="info-row">
+      <div class="label">Destination:</div>
+      <div class="value" id="display-destination">Unknown</div>
+    </div>
+    <div class="info-row">
+      <div class="label">Callsign:</div>
+      <div class="value" id="display-callsign">Unknown</div>
+    </div>
+    <div class="info-row">
+      <div class="label">Airline:</div>
+      <div class="value" id="display-airline">Unknown</div>
+    </div>
+  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@4.0.3/dist/obs-websocket.js"></script>
   <script>
-    const obs = new OBSWebSocket();
     const apiKey = 'c6cd535ee0aa6d73cfa20ad1df50987b';
-    const obsPassword = 'password';
     const baseUrl = 'https://eletrixwtf.github.io/';
-    let reconnectAttempts = 0;
-    const maxReconnectAttempts = 3;
-    const reconnectInterval = 120000; // 120 seconds to reduce lag
-
-    // Function to connect to OBS WebSocket with limited reconnect attempts
-    function connectToOBS() {
-      if (reconnectAttempts >= maxReconnectAttempts) {
-        return; // Stop trying to reconnect after max attempts
-      }
-      obs.connect('ws://localhost:4444', obsPassword)
-        .then(() => {
-          reconnectAttempts = 0; // Reset attempts on successful connection
-        })
-        .catch(err => {
-          reconnectAttempts++;
-          setTimeout(connectToOBS, reconnectInterval);
-        });
-    }
-    connectToOBS();
-
-    // Handle connection closed event without logging to reduce notifications
-    obs.on('ConnectionClosed', () => {
-      if (reconnectAttempts < maxReconnectAttempts) {
-        setTimeout(connectToOBS, reconnectInterval);
-      }
-    });
 
     // Get URL parameters
     const urlParams = new URLSearchParams(window.location.search);
@@ -114,16 +130,19 @@
     // Elements
     const inputSection = document.getElementById('input-section');
     const flightInfo = document.getElementById('flight-info');
+    const flightDisplay = document.getElementById('flight-display');
     const callsignInput = document.getElementById('callsign-input');
     const submitBtn = document.getElementById('submit-btn');
     const resetBtn = document.getElementById('reset-btn');
     const errorMessage = document.getElementById('error-message');
     const currentCallsign = document.getElementById('current-callsign');
+    const displayCallsign = document.getElementById('display-callsign');
 
     // Handle controller mode (dock)
     if (mode === 'controller') {
       inputSection.style.display = 'block';
       flightInfo.style.display = 'none';
+      flightDisplay.style.display = 'none';
 
       // Handle Enter key
       callsignInput.addEventListener('keypress', (e) => {
@@ -154,24 +173,9 @@
             if (data.data && data.data.length > 0) {
               const flight = data.data[0];
               if (flight.departure.iata === 'MEL' || flight.arrival.iata === 'MEL') {
-                const sources = [
-                  { name: 'Destination Browser', url: `${baseUrl}?callsign=${callsign}` },
-                  { name: 'Airline Browser', url: `${baseUrl}?callsign=${callsign}` },
-                  { name: 'Registration Browser', url: `${baseUrl}?callsign=${callsign}` }
-                ];
-                sources.forEach(source => {
-                  obs.send('SetBrowserSourceProperties', {
-                    sourceName: source.name,
-                    url: source.url
-                  }).catch(err => console.error(`Failed to update ${source.name}:`, err));
-                });
-                ['Image Source', 'Destination Browser', 'Airline Browser', 'Registration Browser'].forEach(source => {
-                  obs.send('SetSourceVisibility', {
-                    sourceName: source,
-                    visible: true,
-                    sceneName: 'Flight Scene'
-                  }).catch(err => console.error(`Failed to show ${source}:`, err));
-                });
+                // Update browser source URL
+                window.location.href = `${baseUrl}?mode=controller&callsign=${callsign}`;
+                // Update controller display
                 inputSection.style.display = 'none';
                 flightInfo.style.display = 'block';
                 currentCallsign.textContent = callsign;
@@ -193,34 +197,19 @@
 
       // Handle reset button
       resetBtn.addEventListener('click', () => {
-        const sources = [
-          { name: 'Destination Browser', url: baseUrl },
-          { name: 'Airline Browser', url: baseUrl },
-          { name: 'Registration Browser', url: baseUrl }
-        ];
-        sources.forEach(source => {
-          obs.send('SetBrowserSourceProperties', {
-            sourceName: source.name,
-            url: source.url
-          }).catch(err => console.error(`Failed to reset ${source.name}:`, err));
-        });
-        ['Image Source', 'Destination Browser', 'Airline Browser', 'Registration Browser'].forEach(source => {
-          obs.send('SetSourceVisibility', {
-            sourceName: source,
-            visible: false,
-            sceneName: 'Flight Scene'
-          }).catch(err => console.error(`Failed to hide ${source}:`, err));
-        });
+        // Reset browser source URL to hide content
+        window.location.href = `${baseUrl}?mode=controller`;
         callsignInput.value = '';
         showError('');
         inputSection.style.display = 'block';
         flightInfo.style.display = 'none';
       });
     } else {
-      // Display mode (browser sources)
+      // Display mode (browser source)
       if (callsign) {
         inputSection.style.display = 'none';
-        flightInfo.style.display = 'block';
+        flightInfo.style.display = 'none';
+        flightDisplay.style.display = 'block';
         fetch(`https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}`)
           .then(response => {
             if (!response.ok) {
@@ -231,27 +220,26 @@
           .then(data => {
             if (data.data && data.data.length > 0) {
               const flight = data.data[0];
-              document.getElementById('destination').textContent = `Destination: ${flight.arrival.airport || 'Unknown'}`;
-              document.getElementById('airline').textContent = `Airline: ${flight.airline.name || 'Unknown'}`;
-              document.getElementById('registration').textContent = `Registration: ${flight.aircraft?.registration || 'Unknown'}`;
+              document.getElementById('display-destination').textContent = `${flight.arrival.airport || 'Unknown'}`;
+              document.getElementById('display-callsign').textContent = callsign;
+              document.getElementById('display-airline').textContent = `${flight.airline.name || 'Unknown'}`;
             } else {
-              document.getElementById('destination').textContent = 'Destination: Not found';
-              document.getElementById('airline').textContent = 'Airline: Not found';
-              document.getElementById('registration').textContent = 'Registration: Not found';
+              document.getElementById('display-destination').textContent = 'Not found';
+              document.getElementById('display-callsign').textContent = 'Not found';
+              document.getElementById('display-airline').textContent = 'Not found';
             }
           })
           .catch(error => {
             console.error('Error fetching flight data:', error);
-            document.getElementById('destination').textContent = `Destination: Error - ${error.message}`;
-            document.getElementById('airline').textContent = `Airline: Error - ${error.message}`;
-            document.getElementById('registration').textContent = `Registration: Error - ${error.message}`;
+            document.getElementById('display-destination').textContent = `Error - ${error.message}`;
+            document.getElementById('display-callsign').textContent = `Error - ${error.message}`;
+            document.getElementById('display-airline').textContent = `Error - ${error.message}`;
           });
       } else {
+        // When no callsign (e.g., on reset), hide the content but keep the browser source active
         inputSection.style.display = 'none';
         flightInfo.style.display = 'none';
-        document.getElementById('destination').textContent = '';
-        document.getElementById('airline').textContent = '';
-        document.getElementById('registration').textContent = '';
+        flightDisplay.style.display = 'none';
       }
     }
 
