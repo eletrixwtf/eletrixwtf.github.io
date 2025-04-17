@@ -48,7 +48,7 @@
     #destination, #airline, #registration {
       margin: 10px 0;
       font-size: 18px;
-      color: #ff0; /* Yellow text for consistency */
+      color: #ff0; /* Yellow text for browser sources */
     }
     #error-message {
       color: red;
@@ -99,7 +99,7 @@
     }
     connectToOBS();
 
-    // Handle connection closed event without logging
+    // Handle connection closed event without logging to reduce notifications
     obs.on('ConnectionClosed', () => {
       if (reconnectAttempts < maxReconnectAttempts) {
         setTimeout(connectToOBS, reconnectInterval);
@@ -109,6 +109,7 @@
     // Get URL parameters
     const urlParams = new URLSearchParams(window.location.search);
     const mode = urlParams.get('mode');
+    const callsign = urlParams.get('callsign');
 
     // Elements
     const inputSection = document.getElementById('input-section');
@@ -141,7 +142,7 @@
           return;
         }
 
-        // Fetch flight data
+        // Fetch flight data with detailed error handling
         fetch(`https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}`)
           .then(response => {
             if (!response.ok) {
@@ -153,27 +154,24 @@
             if (data.data && data.data.length > 0) {
               const flight = data.data[0];
               if (flight.departure.iata === 'MEL' || flight.arrival.iata === 'MEL') {
-                // Update browser sources with separate HTML files
                 const sources = [
-                  { name: 'Destination Browser', url: `${baseUrl}destination.html?callsign=${callsign}` },
-                  { name: 'Airline Browser', url: `${baseUrl}airline.html?callsign=${callsign}` },
-                  { name: 'Registration Browser', url: `${baseUrl}registration.html?callsign=${callsign}` }
+                  { name: 'Destination Browser', url: `${baseUrl}?callsign=${callsign}` },
+                  { name: 'Airline Browser', url: `${baseUrl}?callsign=${callsign}` },
+                  { name: 'Registration Browser', url: `${baseUrl}?callsign=${callsign}` }
                 ];
                 sources.forEach(source => {
-                  obs.call('SetBrowserSourceProperties', {
+                  obs.send('SetBrowserSourceProperties', {
                     sourceName: source.name,
                     url: source.url
                   }).catch(err => console.error(`Failed to update ${source.name}:`, err));
                 });
-                // Show sources
                 ['Image Source', 'Destination Browser', 'Airline Browser', 'Registration Browser'].forEach(source => {
-                  obs.call('SetSourceRender', {
+                  obs.send('SetSourceVisibility', {
                     sourceName: source,
-                    render: true,
+                    visible: true,
                     sceneName: 'Flight Scene'
                   }).catch(err => console.error(`Failed to show ${source}:`, err));
                 });
-                // Update controller display
                 inputSection.style.display = 'none';
                 flightInfo.style.display = 'block';
                 currentCallsign.textContent = callsign;
@@ -195,32 +193,66 @@
 
       // Handle reset button
       resetBtn.addEventListener('click', () => {
-        // Reset browser sources to blank
         const sources = [
-          { name: 'Destination Browser', url: `${baseUrl}destination.html` },
-          { name: 'Airline Browser', url: `${baseUrl}airline.html` },
-          { name: 'Registration Browser', url: `${baseUrl}registration.html` }
+          { name: 'Destination Browser', url: baseUrl },
+          { name: 'Airline Browser', url: baseUrl },
+          { name: 'Registration Browser', url: baseUrl }
         ];
         sources.forEach(source => {
-          obs.call('SetBrowserSourceProperties', {
+          obs.send('SetBrowserSourceProperties', {
             sourceName: source.name,
             url: source.url
           }).catch(err => console.error(`Failed to reset ${source.name}:`, err));
         });
-        // Hide sources
         ['Image Source', 'Destination Browser', 'Airline Browser', 'Registration Browser'].forEach(source => {
-          obs.call('SetSourceRender', {
+          obs.send('SetSourceVisibility', {
             sourceName: source,
-            render: false,
+            visible: false,
             sceneName: 'Flight Scene'
           }).catch(err => console.error(`Failed to hide ${source}:`, err));
         });
-        // Reset controller display
         callsignInput.value = '';
         showError('');
         inputSection.style.display = 'block';
         flightInfo.style.display = 'none';
       });
+    } else {
+      // Display mode (browser sources)
+      if (callsign) {
+        inputSection.style.display = 'none';
+        flightInfo.style.display = 'block';
+        fetch(`https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}`)
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}, Message: ${response.statusText}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            if (data.data && data.data.length > 0) {
+              const flight = data.data[0];
+              document.getElementById('destination').textContent = `Destination: ${flight.arrival.airport || 'Unknown'}`;
+              document.getElementById('airline').textContent = `Airline: ${flight.airline.name || 'Unknown'}`;
+              document.getElementById('registration').textContent = `Registration: ${flight.aircraft?.registration || 'Unknown'}`;
+            } else {
+              document.getElementById('destination').textContent = 'Destination: Not found';
+              document.getElementById('airline').textContent = 'Airline: Not found';
+              document.getElementById('registration').textContent = 'Registration: Not found';
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching flight data:', error);
+            document.getElementById('destination').textContent = `Destination: Error - ${error.message}`;
+            document.getElementById('airline').textContent = `Airline: Error - ${error.message}`;
+            document.getElementById('registration').textContent = `Registration: Error - ${error.message}`;
+          });
+      } else {
+        inputSection.style.display = 'none';
+        flightInfo.style.display = 'none';
+        document.getElementById('destination').textContent = '';
+        document.getElementById('airline').textContent = '';
+        document.getElementById('registration').textContent = '';
+      }
     }
 
     // Show error or confirmation message
