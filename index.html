@@ -76,27 +76,34 @@
   <script src="https://cdn.jsdelivr.net/npm/obs-websocket-js@4.0.3/dist/obs-websocket.js"></script>
   <script>
     const obs = new OBSWebSocket();
-    const apiKey = 'ce42ef7b2202bff41d26d7148d9a244e';
+    const apiKey = '14180d3eeaf099fd6719d349f17d9f8c';
     const obsPassword = 'psaupsswebserver123@@';
-    const baseUrl = 'https://eletrixwtf.github.io/flight-tracker/';
+    const baseUrl = 'https://eletrixwtf.github.io/';
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    const reconnectInterval = 30000; // 30 seconds
 
-    // Function to connect to OBS WebSocket with automatic reconnect
+    // Function to connect to OBS WebSocket with limited reconnect attempts
     function connectToOBS() {
+      if (reconnectAttempts >= maxReconnectAttempts) {
+        return; // Stop trying to reconnect after max attempts
+      }
       obs.connect('ws://localhost:4444', obsPassword)
         .then(() => {
-          console.log('Connected to OBS');
+          reconnectAttempts = 0; // Reset attempts on successful connection
         })
         .catch(err => {
-          console.error('OBS connection failed:', err);
-          setTimeout(connectToOBS, 5000); // Try again in 5 seconds
+          reconnectAttempts++;
+          setTimeout(connectToOBS, reconnectInterval);
         });
     }
     connectToOBS();
 
-    // Reconnect if the connection is closed
+    // Handle connection closed event without logging to reduce notifications
     obs.on('ConnectionClosed', () => {
-      console.log('WebSocket client disconnected');
-      setTimeout(connectToOBS, 5000); // Reconnect after 5 seconds
+      if (reconnectAttempts < maxReconnectAttempts) {
+        setTimeout(connectToOBS, reconnectInterval);
+      }
     });
 
     // Get URL parameters
