@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flight Tracker Controller</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    #input-section {
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      width: 300px;
+    }
+    #callsign-input {
+      padding: 10px;
+      width: 100%;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    #submit-btn, #reset-btn {
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #submit-btn:hover, #reset-btn:hover {
+      background-color: #0056b3;
+    }
+    #flight-info {
+      background-color: white;
+      padding: 20px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      width: 300px;
+      margin-top: 20px;
+    }
+    #error-message {
+      color: red;
+      margin-top: 10px;
+      display: none;
+    }
+    #destination, #current-callsign, #airline, #registration {
+      color: #ff0;
+      font-size: 18px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <div id="input-section">
+    <h2>Enter Flight Call Sign</h2>
+    <input type="text" id="callsign-input" placeholder="e.g., VA284">
+    <button id="submit-btn">Submit</button>
+    <div id="error-message"></div>
+  </div>
+  <div id="flight-info" style="display: none;">
+    <h2>Flight Information</h2>
+    <div>Call Sign: <span id="current-callsign"></span></div>
+    <div id="destination"></div>
+    <div id="airline"></div>
+    <div id="registration"></div>
+    <button id="reset-btn">Reset</button>
+  </div>
+
+  <script>
+    const apiKey = 'c6cd535ee0aa6d73cfa20ad1df50987b';
+
+    // Elements
+    const inputSection = document.getElementById('input-section');
+    const flightInfo = document.getElementById('flight-info');
+    const callsignInput = document.getElementById('callsign-input');
+    const submitBtn = document.getElementById('submit-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const errorMessage = document.getElementById('error-message');
+    const currentCallsign = document.getElementById('current-callsign');
+
+    // Check if a callsign is stored in localStorage
+    const storedCallsign = localStorage.getItem('callsign');
+    if (storedCallsign) {
+      fetchFlightData(storedCallsign);
+    }
+
+    // Handle submit button
+    submitBtn.addEventListener('click', () => {
+      const callsign = callsignInput.value.trim().toUpperCase();
+      if (!callsign) {
+        showError('Please enter a call sign');
+        return;
+      }
+
+      // Store callsign in localStorage
+      localStorage.setItem('callsign', callsign);
+
+      // Fetch flight data
+      fetchFlightData(callsign);
+    });
+
+    // Handle reset button
+    resetBtn.addEventListener('click', () => {
+      // Clear callsign from localStorage
+      localStorage.removeItem('callsign');
+      // Reset controller
+      inputSection.style.display = 'block';
+      flightInfo.style.display = 'none';
+      callsignInput.value = '';
+      showError('');
+    });
+
+    // Handle Enter key
+    callsignInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        submitBtn.click();
+      }
+    });
+
+    // Function to fetch and display flight data
+    function fetchFlightData(callsign) {
+      fetch(`https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          if (data.data && data.data.length > 0) {
+            const flight = data.data[0];
+            if (flight.departure.iata === 'MEL' || flight.arrival.iata === 'MEL') {
+              inputSection.style.display = 'none';
+              flightInfo.style.display = 'block';
+              currentCallsign.textContent = callsign;
+              document.getElementById('destination').textContent = `Destination: ${flight.arrival.airport || 'Unknown'}`;
+              document.getElementById('airline').textContent = `Airline: ${flight.airline.name || 'Unknown'}`;
+              document.getElementById('registration').textContent = `Registration: ${flight.aircraft?.registration || 'Unknown'}`;
+            } else {
+              showError('Flight not found at Melbourne Airport (MEL)');
+            }
+          } else {
+            showError('Flight not found');
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching flight data:', error);
+          showError(`Error fetching flight data: ${error.message}`);
+        });
+    }
+
+    // Show error or confirmation message
+    function showError(message, isError = true) {
+      errorMessage.textContent = message;
+      errorMessage.style.display = message ? 'block' : 'none';
+      errorMessage.style.color = isError ? 'red' : 'green';
+    }
+  </script>
+</body>
+</html>
