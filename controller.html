@@ -4,78 +4,124 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Flight Tracker Controller</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f0f0f0;
-      color: #333;
+      font-family: 'Montserrat', sans-serif;
+      background-color: #000;
+      color: #fff;
       margin: 0;
       padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
     }
-    #input-section {
-      background-color: white;
-      padding: 20px;
-      border-radius: 5px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    #input-section, #flight-info {
       width: 300px;
+      text-align: center;
+    }
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    h2 {
+      font-size: 18px;
+      font-weight: 400;
+      margin-bottom: 20px;
     }
     #callsign-input {
-      padding: 10px;
       width: 100%;
-      margin-bottom: 10px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      padding: 10px;
+      border: none;
+      border-radius: 20px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 16px;
+      margin-bottom: 20px;
+      box-sizing: border-box;
     }
     #submit-btn, #reset-btn {
-      padding: 10px 20px;
-      background-color: #007bff;
-      color: white;
+      background-color: #00cc00;
+      color: #fff;
       border: none;
-      border-radius: 4px;
+      border-radius: 20px;
+      padding: 10px 20px;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      text-transform: uppercase;
       cursor: pointer;
+      transition: background-color 0.3s;
     }
     #submit-btn:hover, #reset-btn:hover {
-      background-color: #0056b3;
-    }
-    #flight-info {
-      background-color: white;
-      padding: 20px;
-      border-radius: 5px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      width: 300px;
-      margin-top: 20px;
+      background-color: #00b300;
     }
     #error-message {
-      color: red;
+      color: #ff0000;
+      font-size: 14px;
       margin-top: 10px;
       display: none;
     }
-    #destination, #current-callsign, #airline, #registration {
-      color: #ff0;
-      font-size: 18px;
-      margin: 10px 0;
+    #flight-info {
+      display: none;
+    }
+    #flight-info .info-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 16px;
+    }
+    #flight-info .label {
+      color: #fff;
+      font-weight: 400;
+    }
+    #flight-info .value {
+      color: #fff;
+      font-weight: 700;
+    }
+    footer {
+      position: fixed;
+      bottom: 10px;
+      font-size: 12px;
+      color: #fff;
+      text-align: center;
+      width: 100%;
     }
   </style>
 </head>
 <body>
   <div id="input-section">
-    <h2>Enter Flight Call Sign</h2>
+    <h1>FLIGHT CARD</h1>
+    <h2>TYPE IN THE CALL SIGN BELOW:</h2>
     <input type="text" id="callsign-input" placeholder="e.g., VA284">
-    <button id="submit-btn">Submit</button>
+    <button id="submit-btn">SUBMIT</button>
     <div id="error-message"></div>
   </div>
-  <div id="flight-info" style="display: none;">
-    <h2>Flight Information</h2>
-    <div>Call Sign: <span id="current-callsign"></span></div>
-    <div id="destination"></div>
-    <div id="airline"></div>
-    <div id="registration"></div>
-    <button id="reset-btn">Reset</button>
+  <div id="flight-info">
+    <h1>FLIGHT CARD</h1>
+    <h2>CURRENT CALL SIGN</h2>
+    <div class="info-row">
+      <span class="label">CALL SIGN:</span>
+      <span class="value" id="current-callsign"></span>
+    </div>
+    <div class="info-row">
+      <span class="label">DESTINATION:</span>
+      <span class="value" id="destination"></span>
+    </div>
+    <div class="info-row">
+      <span class="label">AIRLINE:</span>
+      <span class="value" id="airline"></span>
+    </div>
+    <div class="info-row">
+      <span class="label">REGISTRATION:</span>
+      <span class="value" id="registration"></span>
+    </div>
+    <button id="reset-btn">RESET</button>
   </div>
+  <footer>© 2025 PLANE SPOTTING AUSTRALIA. FLIGHT CARD SYSTEM DEVELOPED BY XYLORRL.</footer>
 
   <script>
-    const apiKey = 'c6cd535ee0aa6d73cfa20ad1df50987b';
-
     // Elements
     const inputSection = document.getElementById('input-section');
     const flightInfo = document.getElementById('flight-info');
@@ -124,9 +170,10 @@
       }
     });
 
-    // Function to fetch and display flight data
+    // Function to fetch and display flight data using OpenSky Network API
     function fetchFlightData(callsign) {
-      fetch(`https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}`)
+      // Fetch all flights and filter for the callsign
+      fetch('https://opensky-network.org/api/states/all')
         .then(response => {
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}, Message: ${response.statusText}`);
@@ -134,15 +181,20 @@
           return response.json();
         })
         .then(data => {
-          if (data.data && data.data.length > 0) {
-            const flight = data.data[0];
-            if (flight.departure.iata === 'MEL' || flight.arrival.iata === 'MEL') {
+          const flight = data.states.find(state => state[1]?.trim().toUpperCase() === callsign);
+          if (flight) {
+            const originCountry = flight[2] || 'Unknown';
+            const icao24 = flight[0]; // Aircraft transponder code for registration lookup
+            const melAirports = ['YMML']; // Melbourne Airport ICAO code
+            const isAtMelbourne = melAirports.includes(flight[13]) || melAirports.includes(flight[11]); // Check origin or destination airport
+
+            if (isAtMelbourne) {
               inputSection.style.display = 'none';
               flightInfo.style.display = 'block';
               currentCallsign.textContent = callsign;
-              document.getElementById('destination').textContent = `Destination: ${flight.arrival.airport || 'Unknown'}`;
-              document.getElementById('airline').textContent = `Airline: ${flight.airline.name || 'Unknown'}`;
-              document.getElementById('registration').textContent = `Registration: ${flight.aircraft?.registration || 'Unknown'}`;
+              document.getElementById('destination').textContent = flight[13] === 'YMML' ? 'Melbourne Airport' : (flight[11] === 'YMML' ? 'Departing Melbourne' : 'Unknown');
+              document.getElementById('airline').textContent = originCountry; // OpenSky doesn't provide airline name directly
+              document.getElementById('registration').textContent = icao24 || 'Unknown'; // Registration approximation
             } else {
               showError('Flight not found at Melbourne Airport (MEL)');
             }
@@ -160,7 +212,7 @@
     function showError(message, isError = true) {
       errorMessage.textContent = message;
       errorMessage.style.display = message ? 'block' : 'none';
-      errorMessage.style.color = isError ? 'red' : 'green';
+      errorMessage.style.color = isError ? '#ff0000' : 'green';
     }
   </script>
 </body>

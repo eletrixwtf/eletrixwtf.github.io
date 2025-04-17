@@ -82,11 +82,9 @@
   </div>
 
   <script>
-    const apiKey = 'c6cd535ee0aa6d73cfa20ad1df50987b';
-
-    // Function to fetch and display flight data
+    // Function to fetch and display flight data using OpenSky Network API
     function fetchFlightData(callsign) {
-      fetch(`https://api.aviationstack.com/v1/flights?access_key=${apiKey}&flight_iata=${callsign}`)
+      fetch('https://opensky-network.org/api/states/all')
         .then(response => {
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}, Message: ${response.statusText}`);
@@ -94,12 +92,23 @@
           return response.json();
         })
         .then(data => {
-          if (data.data && data.data.length > 0) {
-            const flight = data.data[0];
-            document.getElementById('display-destination').textContent = `${flight.arrival.airport || 'Unknown'}`;
-            document.getElementById('display-callsign').textContent = callsign;
-            document.getElementById('display-airline').textContent = `${flight.airline.name || 'Unknown'}`;
-            document.body.style.display = 'block';
+          const flight = data.states.find(state => state[1]?.trim().toUpperCase() === callsign);
+          if (flight) {
+            const originCountry = flight[2] || 'Unknown';
+            const melAirports = ['YMML']; // Melbourne Airport ICAO code
+            const isAtMelbourne = melAirports.includes(flight[13]) || melAirports.includes(flight[11]); // Check origin or destination airport
+
+            if (isAtMelbourne) {
+              document.getElementById('display-destination').textContent = flight[13] === 'YMML' ? 'Melbourne Airport' : (flight[11] === 'YMML' ? 'Departing Melbourne' : 'Unknown');
+              document.getElementById('display-callsign').textContent = callsign;
+              document.getElementById('display-airline').textContent = originCountry; // OpenSky doesn't provide airline name directly
+              document.body.style.display = 'block';
+            } else {
+              document.getElementById('display-destination').textContent = 'Not found at MEL';
+              document.getElementById('display-callsign').textContent = callsign;
+              document.getElementById('display-airline').textContent = 'Not found';
+              document.body.style.display = 'block';
+            }
           } else {
             document.getElementById('display-destination').textContent = 'Not found';
             document.getElementById('display-callsign').textContent = 'Not found';
