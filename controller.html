@@ -130,7 +130,7 @@
   <footer>© 2025 xylorr1dev.</footer>
 
   <script>
-    const apiKey = 'ff0240f9cd26f21dc45136d3c32bc196'; //IMPORTANT API KEY HERE
+    const apiKey = 'ff0240f9cd26f21dc45136d3c32bc196';
 
     // Elements
     const inputSection = document.getElementById('input-section');
@@ -181,8 +181,8 @@
       }
     });
 
-    // Function to calculate flight duration
-    function calculateFlightTime(departureTime, arrivalTime) {
+    // Function to calculate total flight duration (for controller display)
+    function calculateTotalFlightTime(departureTime, arrivalTime) {
       try {
         const dep = new Date(departureTime);
         const arr = new Date(arrivalTime);
@@ -214,9 +214,10 @@
                 airline: flight.airline.name || 'Unknown',
                 flightNumber: flight.flight.iata || callsign,
                 route: `${flight.departure.iata || 'Unknown'} - ${flight.arrival.iata || 'Unknown'}`,
-                aircraftType: flight.aircraft?.model || 'Unknown',
-                flightTime: calculateFlightTime(flight.departure.scheduled, flight.arrival.scheduled),
-                registration: flight.aircraft?.registration || 'N/A'
+                aircraftType: flight.aircraft?.model || 'N/A',
+                flightTime: calculateTotalFlightTime(flight.departure.scheduled, flight.arrival.scheduled),
+                registration: flight.aircraft?.registration || 'N/A',
+                departureTime: flight.departure.actual || flight.departure.scheduled // Store for elapsed time calculation
               };
               // Store flight data in localStorage
               localStorage.setItem('flightData', JSON.stringify(flightData));

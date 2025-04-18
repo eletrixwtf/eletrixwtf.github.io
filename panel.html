@@ -18,7 +18,7 @@
     #flight-display {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      grid-template-rows: auto auto auto;
+      grid-template-rows: auto auto auto auto;
       gap: 5px;
     }
     .header {
@@ -48,7 +48,7 @@
       margin-bottom: 5px;
     }
     .info-box.route .value {
-      color: #ff0; /* Yellow for route */
+      color: #fff; /* White for route */
       font-size: 24px;
     }
     .info-box .label {
@@ -79,7 +79,7 @@
       <div class="location-icon"></div>
       <div class="value" id="display-route">Unknown</div>
       <div class="location-icon"></div>
-      <div class="label" style="position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);">Destination</div>
+      <div class="label" style="position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);">Route</div>
     </div>
     <div class="info-box">
       <div class="value" id="display-aircraft-type">Unknown</div>
@@ -89,16 +89,38 @@
       <div class="value" id="display-flight-time">Unknown</div>
       <div class="label">Flight Time</div>
     </div>
+    <div class="info-box">
+      <div class="value" id="display-registration">Unknown</div>
+      <div class="label">Registration</div>
+    </div>
   </div>
 
   <script>
+    // Function to calculate elapsed flight time (time since departure)
+    function calculateElapsedFlightTime(departureTime) {
+      try {
+        const dep = new Date(departureTime);
+        const now = new Date('2025-04-18T16:37:00-07:00'); // Current time: April 18, 2025, 04:37 PM PDT
+        const diffMs = now - dep;
+        if (diffMs < 0) return 'Not Departed'; // Flight hasn't started yet
+        const diffMins = Math.floor(diffMs / 1000 / 60);
+        const hours = Math.floor(diffMins / 60);
+        const minutes = diffMins % 60;
+        return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      } catch (error) {
+        console.error('Error calculating elapsed flight time:', error);
+        return 'Unknown';
+      }
+    }
+
     // Function to display flight data from localStorage
     function displayFlightData(flightData) {
       document.getElementById('display-airline').textContent = flightData.airline;
       document.getElementById('display-flight-number').textContent = flightData.flightNumber;
       document.getElementById('display-route').textContent = flightData.route;
       document.getElementById('display-aircraft-type').textContent = flightData.aircraftType;
-      document.getElementById('display-flight-time').textContent = flightData.flightTime;
+      document.getElementById('display-flight-time').textContent = calculateElapsedFlightTime(flightData.departureTime);
+      document.getElementById('display-registration').textContent = flightData.registration;
       document.body.style.display = 'block';
     }
 
@@ -114,6 +136,7 @@
         document.getElementById('display-route').textContent = 'Not found';
         document.getElementById('display-aircraft-type').textContent = 'Not found';
         document.getElementById('display-flight-time').textContent = 'Not found';
+        document.getElementById('display-registration').textContent = 'Not found';
         document.body.style.display = 'none';
       }
     }
