@@ -35,7 +35,7 @@
       width: 100%;
       padding: 10px;
       border: none;
-      border-radius: 20px;
+      border-radius: 8px;
       font-family: 'Montserrat', sans-serif;
       font-size: 16px;
       margin-bottom: 20px;
@@ -45,7 +45,7 @@
       background-color: #00cc00;
       color: #fff;
       border: none;
-      border-radius: 20px;
+      border-radius: 8px;
       padding: 10px 20px;
       font-family: 'Montserrat', sans-serif;
       font-size: 16px;
@@ -121,12 +121,16 @@
       <span class="label">FLIGHT TIME:</span>
       <span class="value" id="flight-time"></span>
     </div>
+    <div class="info-row">
+      <span class="label">REGISTRATION:</span>
+      <span class="value" id="registration"></span>
+    </div>
     <button id="reset-btn">RESET</button>
   </div>
-  <footer>© 2025 PlaneSpottingAustralia. FCS made by xylorr1dev.</footer>
+  <footer>© 2025 xylorr1dev.</footer>
 
   <script>
-    const apiKey = 'e6411c7528cc23341da3d19803b15d1f';
+    const apiKey = 'ff0240f9cd26f21dc45136d3c32bc196'; //IMPORTANT API KEY HERE
 
     // Elements
     const inputSection = document.getElementById('input-section');
@@ -136,10 +140,11 @@
     const resetBtn = document.getElementById('reset-btn');
     const errorMessage = document.getElementById('error-message');
 
-    // Check if a callsign is stored in localStorage
+    // Check if a callsign and flight data are stored in localStorage
     const storedCallsign = localStorage.getItem('callsign');
-    if (storedCallsign) {
-      fetchFlightData(storedCallsign);
+    const storedFlightData = localStorage.getItem('flightData');
+    if (storedCallsign && storedFlightData) {
+      displayFlightData(JSON.parse(storedFlightData));
     }
 
     // Handle submit button
@@ -159,8 +164,9 @@
 
     // Handle reset button
     resetBtn.addEventListener('click', () => {
-      // Clear callsign from localStorage
+      // Clear callsign and flight data from localStorage
       localStorage.removeItem('callsign');
+      localStorage.removeItem('flightData');
       // Reset controller
       inputSection.style.display = 'block';
       flightInfo.style.display = 'none';
@@ -204,13 +210,17 @@
           if (data.data && data.data.length > 0) {
             const flight = data.data[0];
             if (flight.departure.iata === 'MEL' || flight.arrival.iata === 'MEL') {
-              inputSection.style.display = 'none';
-              flightInfo.style.display = 'block';
-              document.getElementById('airline').textContent = flight.airline.name || 'Unknown';
-              document.getElementById('flight-number').textContent = flight.flight.iata || callsign;
-              document.getElementById('route').textContent = `${flight.departure.iata || 'Unknown'} - ${flight.arrival.iata || 'Unknown'}`;
-              document.getElementById('aircraft-type').textContent = flight.aircraft?.model || 'Unknown';
-              document.getElementById('flight-time').textContent = calculateFlightTime(flight.departure.scheduled, flight.arrival.scheduled);
+              const flightData = {
+                airline: flight.airline.name || 'Unknown',
+                flightNumber: flight.flight.iata || callsign,
+                route: `${flight.departure.iata || 'Unknown'} - ${flight.arrival.iata || 'Unknown'}`,
+                aircraftType: flight.aircraft?.model || 'Unknown',
+                flightTime: calculateFlightTime(flight.departure.scheduled, flight.arrival.scheduled),
+                registration: flight.aircraft?.registration || 'N/A'
+              };
+              // Store flight data in localStorage
+              localStorage.setItem('flightData', JSON.stringify(flightData));
+              displayFlightData(flightData);
             } else {
               showError('Flight not found at Melbourne Airport (MEL)');
             }
@@ -222,6 +232,18 @@
           console.error('Error fetching flight data:', error);
           showError(`Error fetching flight data: ${error.message}`);
         });
+    }
+
+    // Function to display flight data
+    function displayFlightData(flightData) {
+      inputSection.style.display = 'none';
+      flightInfo.style.display = 'block';
+      document.getElementById('airline').textContent = flightData.airline;
+      document.getElementById('flight-number').textContent = flightData.flightNumber;
+      document.getElementById('route').textContent = flightData.route;
+      document.getElementById('aircraft-type').textContent = flightData.aircraftType;
+      document.getElementById('flight-time').textContent = flightData.flightTime;
+      document.getElementById('registration').textContent = flightData.registration;
     }
 
     // Show error or confirmation message
